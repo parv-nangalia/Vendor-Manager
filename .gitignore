@@ -1,0 +1,12 @@
+.vs/
+
+# Python-specific
+*.pyc
+__pycache__/
+env/
+.DS_Store
+
+
+**/migrations/
+!**/migrations/__init__.py
+!**/migrations/[0-9]*_*.py
