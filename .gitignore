@@ -6,6 +6,7 @@ __pycache__/
 env/
 .DS_Store
 
+README.md
 
 **/migrations/
 !**/migrations/__init__.py
