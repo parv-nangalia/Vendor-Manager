@@ -2,7 +2,8 @@ from django import dispatch
 from django.dispatch import receiver
 from .models import PurchaseOrder, Performance, Vendor
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import F, Avg
+from django.db.models import F, Avg, ExpressionWrapper, DurationField
+from datetime import timedelta
 from django.utils import timezone
 
 
@@ -49,19 +50,23 @@ def performance_metrics(sender,request,**kwargs):
         fulfillment_rate=obj.fulfillment_rate if obj else 0.0
     )
     
-    if request.data['status'] == "Completed":
-        otr = calculate_on_time_delivery_rate(vendor_pos)
+    if request.data['status'] == "completed":
+        otr = calculate_on_time_delivery_rate(vendor_pos, curr_obj.delivery_date, vendor_obj.on_time_delivery_rate)
         print("called_otr")
         new_obj.on_time_delivery = otr
-    else:
+
+        if(curr_obj.quality_rating is not None):
+            qra = calculate_quality_rating_average(vendor_pos)
+            new_obj.quality_rating_avg = qra
+            print("called_qr")
+
+
+    if 'status' in request.data:
         avr = calculate_fulfillment_rate(vendor_pos)
         new_obj.fulfillment_rate = avr
         print("called_fr")
 
-    if(curr_obj.quality_rating is not None):
-        qra = calculate_quality_rating_average(vendor_pos)
-        new_obj.quality_rating_avg = qra
-        print("called_qr")
+
     new_obj.save()
     update_vendor_details(new_obj)
     return
@@ -103,10 +108,25 @@ def Acknowledged_po(sender, request, **kwargs):
 ########################################################################################
 
 
-def calculate_on_time_delivery_rate(vendor_pos):
+def calculate_on_time_delivery_rate(vendor_pos, delivery_date, rate):    
     total_completed_po = vendor_pos.filter(status='completed').count()
-    quick_delivery = vendor_pos.filter(delivery_date__lte=timezone.now()).count()
-    otr =  total_completed_po/quick_delivery
+    otr = 0
+    if delivery_date >= timezone.now():
+        try:
+            otr = 1/total_completed_po
+        except ZeroDivisionError as e:
+            #print(e)
+            otr = 0
+        if rate!=0:
+            otr += rate*(total_completed_po-1)/total_completed_po
+    
+    # quick_delivery = 
+    # print(quick_delivery)
+    # try:
+    #     otr =  quick_delivery/total_completed_po
+    #     print(otr)
+    # except ZeroDivisionError:
+    #     otr = 0
     return otr
 
 def calculate_quality_rating_average(vendor_pos):
@@ -114,9 +134,14 @@ def calculate_quality_rating_average(vendor_pos):
     return avg_value
 
 def calculate_average_response_time(vendor_pos):
-    avg_response = vendor_pos.aggregate(avg_time_diff=Avg(F('acknowledgment_date') - F('issue_date')))['avg_time_diff']
-    print(avg_response)
-    return avg_response
+    time_diff_seconds = ExpressionWrapper(
+        F('acknowledgment_date') - F('issue_date'),
+        output_field=DurationField()
+    )
+    avg_response = vendor_pos.aggregate(avg_time_diff=Avg(time_diff_seconds))['avg_time_diff']
+    duration_in_seconds = avg_response.total_seconds()
+    duration_in_hours = duration_in_seconds / 3600
+    return duration_in_hours
 
 def calculate_fulfillment_rate(vendor_pos):
     total_completed_po = vendor_pos.filter(status='completed').count()

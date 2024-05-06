@@ -136,10 +136,11 @@ class VendorAcknowledgeAPIView(APIView):
             return Response(status=status.HTTP_404_NOT_FOUND)
         else:
             porder.acknowledgment_date = timezone.now()
+            vendor = porder.vendor
             serializer = POSerializer(porder, data=request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()
-                acknowledged.send(sender=po,request=request)
+                acknowledged.send(sender=vendor.id,request=request)
                 return Response(serializer.data)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)        
 
