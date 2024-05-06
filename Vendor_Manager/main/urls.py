@@ -14,7 +14,7 @@ urlpatterns = [
     path('api/vendor/<slug:pk>/', views.VendorDetailAPIView.as_view(), name='api-vendor-id'),   
     # Endpoint for details(GET), update(PUT), remove(DELETE) on vendor. 
     
-    path('api/vendor/<slug:pk>/performance/', views.VendorPerformanceAPIView.as_view(), name='api-vendor-id'),   
+    path('api/vendor/<slug:pk>/performance/', views.VendorPerformanceAPIView.as_view(), name='api-vendor-id-performance'),   
     # to direct all the other url paths to the 'main' app
     
     path('api/purchase_orders/', views.PurchaseOrderCreateAPIView.as_view(), name='api-po'),
