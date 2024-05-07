@@ -5,9 +5,20 @@ from django.contrib import admin
 from django.urls import path
 from django.urls import path, include
 from main import views
+from main import authenticate as auth
 
 
 urlpatterns = [
+
+    path('', auth.HomepageAPIView.as_view(), name='home'),
+
+    path('signup/', auth.SignupAPIView.as_view(), name='signup'),
+
+    path('login/', auth.LoginAPIView.as_view(), name='login'),
+
+    path('logout/', auth.LogoutAPIView.as_view(), name='logout'),
+
+
     path('api/vendor/', views.VendorListCreateAPIView.as_view() ,name='api-vendor'),
     # Endpoint for GET, POST for vendors
     
@@ -24,6 +35,8 @@ urlpatterns = [
     #
 
     path('api/purchase_orders/<slug:po>/acknowledge', views.VendorAcknowledgeAPIView.as_view() , name='api-vendor-acknowledge'),
+
+
 ]
 
 

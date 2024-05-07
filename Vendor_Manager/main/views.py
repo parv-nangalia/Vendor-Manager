@@ -6,15 +6,29 @@ from .models import Vendor, Performance, PurchaseOrder
 from .serializers import VendorSerializer, POSerializer, PerformanceSerializer
 from django.utils import timezone
 from .signals import po_status_changed, acknowledged
-
+from rest_framework.permissions import IsAuthenticated
 
 # Create your views here.
 
 class VendorListCreateAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         vendor = Vendor.objects.all()
         serializer = VendorSerializer(vendor, many=True)
-        return Response(serializer.data)
+        json_data = { "name": "JOe",
+                        "contact_details": "8793223432",
+                        "address": "hello world 2" }
+        
+        response_data = {
+            "SAMPLE_FORM_DATA": json_data,
+            "------------":"------------ ",
+            "-----------":"------------",
+            "vendor_data": serializer.data
+           
+        }
+        return Response(response_data)
 
     def post(self, request):
         serializer = VendorSerializer(data=request.data)
@@ -27,6 +41,9 @@ class VendorListCreateAPIView(APIView):
 
 
 class VendorDetailAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
     def get_object(self, pk):
         try:
             return Vendor.objects.get(pk=pk)
@@ -61,10 +78,32 @@ class VendorDetailAPIView(APIView):
 
 
 class PurchaseOrderCreateAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
     def get(self, request):
         po = PurchaseOrder.objects.all()
         serializer = POSerializer(po, many=True)
-        return Response(serializer.data)
+        json_data = {
+            "order_date": "2024-05-04T10:00:00Z",
+            "delivery_date": "2024-05-10T10:00:00Z",
+            "items": "milk",
+            "quantity": 5,
+            "status": "Pending",
+            "quality_rating": 7.7,
+            "vendor": 1 
+        }
+        
+        response_data = {
+            "SAMPLE_FORM_DATA": json_data,
+            "------------":"------------ ",
+            "-----------":"------------",
+            "purchase_order": serializer.data
+           
+        }
+
+        return Response(response_data)
+
 
     def post(self, request):
         serializer = POSerializer(data=request.data)
@@ -75,6 +114,9 @@ class PurchaseOrderCreateAPIView(APIView):
     
 
 class PurchaseOrderDetailAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
     def get_object(self, po):
         try:
             return PurchaseOrder.objects.get(pk=po)
@@ -117,6 +159,7 @@ class VendorPerformanceAPIView(APIView):
     #         return Performance.objects.get(vendor=pk)
     #     except Performance.DoesNotExist:
     #         return None
+    permission_classes = [IsAuthenticated]
 
     def get(self, request, pk):
         performance = Performance.objects.filter(vendor=pk)
@@ -124,6 +167,9 @@ class VendorPerformanceAPIView(APIView):
         return Response(serializer.data)
 
 class VendorAcknowledgeAPIView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
     def get_object(self, po):
         try:
             return PurchaseOrder.objects.get(pk=po)
